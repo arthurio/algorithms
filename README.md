@@ -14,12 +14,6 @@ Example:
 
 ```bash
 python -m implementations.tests.sorts
+python -m problems.tests.shortest_path_in_matrix
 ```
 
-## See problem resolutions
-
-Example
-
-```bash
-python -m problems.shortest_path_in_matrix
-```

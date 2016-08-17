@@ -1,6 +1,12 @@
 # algorithms
 Set of common algorithms made on my own.
 
+## Installation
+
+```bash
+pip install -r requirements
+```
+
 ## Folders
 
  - **implementations**: My own implementation of a variety of algorithms and data structures.

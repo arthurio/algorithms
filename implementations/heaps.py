@@ -7,6 +7,9 @@
 # Fibonacci Heap  | O(1)     | O(log(n))   | O(1)         | O(1)      | O(log(n)) | O(1)
 
 
+import math
+
+
 class HeapElement(object):
     """ Element of a Heap. It can be used in a array as is but needs to be decorated for a tree.
 
@@ -16,8 +19,8 @@ class HeapElement(object):
     def __init__(self, key=None):
         self.key = key
 
-    def __str__(self):
-        return str(self.key) if self.key else ""
+    def __repr__(self):
+        return '%s(key=%r)' % (self.__class__.__name__, self.key)
 
     @property
     def left_child(self):
@@ -28,37 +31,61 @@ class HeapElement(object):
         raise NotImplementedError
 
 
-class HeapNodeElement(HeapElement):
+class NodeHeapElement(HeapElement):
     """ Node used in our tree implementation of the Heap.
 
     Attributes:
-        key: The value of held by the node.
-        left_child_node (HeapNodeElement):
-        right_child_node (HeapNodeElement):
+        parent (NodeHeapElement: Parent node
+        key: The value held by the node.
+        left_child_node (NodeHeapElement):
+        right_child_node (NodeHeapElement):
     """
     def __init__(self, key=None):
-        super(HeapNodeElement, self).__init__(key)
+        super(NodeHeapElement, self).__init__(key)
         self._left_child = None
         self._right_child = None
+        self._parent = None
 
     @property
     def left_child(self):
         return self._left_child
 
     @left_child.setter
-    def left_child(self, key):
-        self._left_child = HeapNodeElement(key)
+    def left_child(self, node):
+        '''
+        Args:
+            node (NodeHeapElement): new node
+        '''
+        self._left_child = node
+        node.parent = self
 
     @property
     def right_child(self):
         return self._right_child
 
     @right_child.setter
-    def right_child(self, key):
-        self._right_child = HeapNodeElement(key)
+    def right_child(self, node):
+        '''
+        Args:
+            node (NodeHeapElement): new node
+        '''
+        self._right_child = node
+        node.parent = self
+
+    @property
+    def parent(self):
+        return self._parent
+
+    @parent.setter
+    def parent(self, node):
+        '''
+        Args:
+            node (NodeHeapElement): new parent
+        '''
+        self._parent = node
 
 
-class HeapArrayElement(HeapElement):
+class ArrayHeapElement(HeapElement):
     """ Node used in our tree implementation of the Heap.
 
     Attributes:
@@ -66,8 +93,11 @@ class HeapArrayElement(HeapElement):
         index: Index in the array.
     """
     def __init__(self, key=None, index=0):
-        super(HeapArrayElement, self).__init__(key)
+        super(ArrayHeapElement, self).__init__(key)
         self.index = index
+
+    def __repr__(self):
+        return '%s(key=%r, index=%r)' % (self.__class__.__name__, self.key, self.index)
 
     @property
     def left_child(self):
@@ -76,6 +106,10 @@ class HeapArrayElement(HeapElement):
     @property
     def right_child(self):
         return 2 * self.index + 2
+
+    @property
+    def parent(self):
+        return int(math.floor((self.index - 1) / 2))
 
 
 class HeapDataStructure(object):
@@ -86,10 +120,19 @@ class HeapDataStructure(object):
         return self._size == 0
 
     def insert(self, key):
-        self._size += 1
+        raise NotImplementedError
+
+    def to_array(self):
+        raise NotImplementedError
+
+    def swap(self, first_element, second_element):
+        first_element.key, second_element.key = second_element.key, first_element.key
+
+    def get_parent(self, element):
+        raise NotImplementedError
 
 
-class HeapArrayDataStructure(HeapDataStructure):
+class ArrayHeapDataStructure(HeapDataStructure):
     """ Simple array.
 
     The first (or last) element will contain the root. The next two elements of the array contain its children.
@@ -98,31 +141,41 @@ class HeapArrayDataStructure(HeapDataStructure):
     This allows moving up or down the tree by doing simple index computations.
     """
     def __init__(self):
-        super(HeapArrayDataStructure, self).__init__()
-        self.array = [HeapArrayElement()]
+        super(ArrayHeapDataStructure, self).__init__()
+        self._array = []
 
-    def __str__(self):
-        return str([str(element) for element in self.array])
+    def __repr__(self):
+        return '%s[%s]' % (self.__class__.__name__, ', '.join([repr(element) for element in self._array]))
+
+    def to_array(self):
+        return [element.key for element in self._array]
 
     def insert(self, key):
         """
         """
-        if self._is_empty():
-            self.array[0].key = key
-        else:
-            self.array.append(
-                HeapArrayElement(key, self._size)
-            )
-        super(HeapArrayDataStructure, self).insert(key)
+        new_element = ArrayHeapElement(key, self._size)
+        self._array.append(
+            new_element
+        )
+        self._size += 1
+        return new_element
+
+    def get_parent(self, element):
+        if element.parent < 0:
+            return None
+        return self._array[element.parent]
 
 
-class HeapTreeDataStructure(HeapDataStructure):
+class TreeHeapDataStructure(HeapDataStructure):
     def __init__(self):
-        super(HeapTreeDataStructure, self).__init__()
-        self._root = HeapNodeElement()
+        super(TreeHeapDataStructure, self).__init__()
+        self._root = None
 
-    def __str__(self):
-        return str([str(node) for node in self._get_all_nodes()])
+    def __repr__(self):
+        return '[%s]' % ', '.join([repr(node) for node in self._get_all_nodes()])
+
+    def to_array(self):
+        return [node.key for node in self._get_all_nodes()]
 
     def _get_all_nodes(self):
         nodes = []
@@ -138,41 +191,47 @@ class HeapTreeDataStructure(HeapDataStructure):
         return nodes
 
     def insert(self, key):
+        new_node = NodeHeapElement(key)
         if self._is_empty():
-            self._root.key = key
+            self._root = new_node
         else:
+            # We already have a root, find the first empty spot with a BFS iteration
             queue = [self._root]
-            def insert_node_if_empty(parent, side, key):
-                """
-                Attributes:
-                    parent (HeapNodeElement): Parent node on which we try to add a child
-                    side (str): 'left_child' or 'right_child'
-                    key: key of the new node
-
-                Return:
-                    node (HeapNodeElement): None if it was empty, else the child node.
-                """
-                node = getattr(parent, side)
-                if not node:
-                    setattr(parent, side, key)
-
-                return node
 
             while queue:
                 node = queue.pop(0)
 
-                left_node = insert_node_if_empty(node, 'left_child', key)
-                if left_node is None:
+                if not node.left_child:
+                    node.left_child = new_node
                     break
 
-                right_node = insert_node_if_empty(node, 'right_child', key)
-                if right_node is None:
+                if not node.right_child:
+                    node.right_child = new_node
                     break
 
-                queue.append(left_node)
-                queue.append(right_node)
+                queue.append(node.left_child)
+                queue.append(node.right_child)
 
-        super(HeapTreeDataStructure, self).insert(key)
+        self._size += 1
+        return new_node
+
+    def get_parent(self, node):
+        return node.parent
+
+
+class HeapCondition(object):
+    def compare(self, parent_key, child_key):
+        raise NotImplementedError
+
+
+class MinHeapCondition(HeapCondition):
+    def compare(self, parent_key, child_key):
+        return parent_key < child_key
+
+
+class MaxHeapCondition(HeapCondition):
+    def compare(self, parent_key, child_key):
+        return parent_key > child_key
 
 
 class Heap(object):
@@ -187,19 +246,27 @@ class Heap(object):
     Attributes:
         root (list)
     """
-    def __init__(self, data_structure=None):
-        # Default the data_structure to the Array implementation
-        if data_structure is None:
-            data_structure = HeapArrayDataStructure()
-        self._data_structure = data_structure
+    def __init__(self, DataStructure, Condition):
+        '''
+        Args:
+            DataStructure (Type): Must be subclass of HeapDataStructure
+            Condition (Type): Must be subclass of HeapCondition
+        '''
+        assert issubclass(DataStructure, HeapDataStructure)
+        assert issubclass(Condition, HeapCondition)
+        self._data_structure = DataStructure()
+        self._condition = Condition()
         self._size = 0
 
-    def __str__(self):
-        return str(self._data_structure)
+    def __repr__(self):
+        return repr(self._data_structure)
+
+    def to_array(self):
+        return self._data_structure.to_array()
 
     # Creation (Class methods)
     @classmethod
-    def create(cls, data_structure=None):
+    def create(cls, data_structure):
         """ Create an empty heap.
 
         Return:
@@ -255,13 +322,17 @@ class Heap(object):
         """
         pass
 
-    def _shift_up(self):
+    def _shift_up(self, element):
         """ Move a node up in the tree, as long as needed.
 
         Used to restore heap condition after insertion.
         Called "sift" because node moves up the tree until it reaches the correct level, as in a sieve.
         """
-        pass
+        parent = self._data_structure.get_parent(element)
+        while parent and not self._condition.compare(parent.key, element.key):
+            self._data_structure.swap(parent, element)
+            parent = self._data_structure.get_parent(parent)
+            element = self._data_structure.get_parent(element)
 
     def _shift_down(self):
         """ Move a node down in the tree, similar to shift-up.
@@ -284,8 +355,8 @@ class Heap(object):
         Args:
             key: Key to add in the heap.
         """
-        self._data_structure.insert(key)
-        self._shift_up()
+        element = self._data_structure.insert(key)
+        self._shift_up(element)
 
     def extract(self):
         """ Extract the root element from the heap.

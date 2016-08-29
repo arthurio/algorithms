@@ -2,6 +2,8 @@ import math
 
 
 def position_of_n(starting_point, formula, n):
+    ''' O(n)
+    '''
     position = starting_point
     for i in range(n + 1):
         position = formula(position, i)
@@ -10,17 +12,6 @@ def position_of_n(starting_point, formula, n):
 
 
 def spiral_formula(start, n):
-    translation = int(math.ceil(n / float(2)))
-    direction = (2 * (translation % 2) - 1)
-    axis = 1 - (n % 2)
-
-    new_position = [None, None]
-    new_position[axis] = start[axis]
-    new_position[1 - axis] = start[1 - axis] + (direction * translation)
-    return new_position
-
-
-if __name__ == '__main__':
     ''' Spiral looks as follow:
 
 
@@ -36,7 +27,9 @@ if __name__ == '__main__':
                         |        .
 
     Given n, the nth edge, write a function that returns it's position.
-         position  translation  translation from root
+    First 6 positions of n:
+
+         position  translation
     n0 = (0, 0)    (0, 0)
     n1 = (0, 1)    (0, 1)
     n2 = (1, 1)    (1, 0)
@@ -45,9 +38,11 @@ if __name__ == '__main__':
     n5 = (-1, 2)   (0, 3)
     n6 = (2, 2)    (3, 0)
     '''
+    translation = int(math.ceil(n / float(2)))
+    direction = (2 * (translation % 2) - 1)
+    axis = 1 - (n % 2)
 
-    starting_point = (0, 0)
-    n = 6
-
-    position = position_of_n(starting_point, spiral_formula, n)
-    print 'n%s = %s' % (n, position)
+    new_position = [None, None]
+    new_position[axis] = start[axis]
+    new_position[1 - axis] = start[1 - axis] + (direction * translation)
+    return new_position

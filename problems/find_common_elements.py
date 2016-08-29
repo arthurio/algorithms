@@ -1,4 +1,9 @@
 def get_common_elements(a1, a2):
+    '''
+    Args:
+        - a1 (list): sorted list
+        - a2 (list): sorted list
+    '''
     commons = []
     i = 0
     j = 0

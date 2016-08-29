@@ -27,7 +27,7 @@ def is_adjacency_correct(matrix, x, y):
         if matrix[nx][ny] is not UNREACHABLE:
             neighbors += 1
 
-        if neighbors > 1:
+        if neighbors > 1:  # We need 2 neighbors to have a path
             return True
 
     return False

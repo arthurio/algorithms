@@ -16,6 +16,14 @@ def find_k_most_frequent_word(words, k):
         word: The kth most frequent word in the list.
     '''
 
+    # Start by placing the words in a Trie and count their occurrence as we go.
+    dictionnary = WordCountTrie()
+    # O(n)
+    for word in words:
+        dictionnary.add(word)
+
+    # Now use a min heap of size k to use the root as kth most frequent word
+
 
 if __name__ == '__main__':
     text = (

@@ -44,3 +44,11 @@ def get_reachable_neighbors(matrix, visited, x, y):
             not visited[nx][ny]  # The neighbor was not already visited from another path
         )
     )
+
+
+def print_matrix(matrix):
+    print '    ' + '|'.join([' %s ' % i for i in range(len(matrix))])
+    print ''.join(['-' for i in range(5 * len(matrix))])
+
+    for x, row in enumerate(matrix):
+        print ' %s |' % x + '|'.join([' %s ' % i for i in row])
